@@ -1,51 +1,52 @@
-# Termux AI Commands Reference
+# Termux AI Commands
 
-## Run AI
+## Run AI Models
 
 ```bash
-llama-cli -m model.gguf -p "prompt"              # Single prompt
-llama-cli -m model.gguf --interactive             # Chat mode
-llama-cli -m model.gguf --system "You are..."     # System prompt
-llama-cli -m model.gguf -p "hi" -n 200            # Limit output tokens
-llama-cli -m model.gguf --temp 0.2                # Low temp = precise
+# Interative chat
+~/llama.cpp/build/bin/llama-cli -m ~/storage/downloads/tiny.gguf --interactive
+
+# One-shot
+~/llama.cpp/build/bin/llama-cli -m ~/storage/downloads/tiny.gguf -p "your prompt" -n 200
+
+# With system prompt
+~/llama.cpp/build/bin/llama-cli -m ~/storage/downloads/tiny.gguf --system "Be concise" --interactive
+
+# Control randomness (0.0 = precise, 1.0 = creative)
+~/llama.cpp/build/bin/llama-cli -m ~/storage/downloads/tiny.gguf --temp 0.2 --interactive
 ```
 
-## Download Models
+## Download More Models
 
 ```bash
-wget -O model.gguf <url>                          # Download
-curl -L -o model.gguf <url>                       # Alternative download
-ls -lh *.gguf                                     # Check file sizes
-rm model.gguf                                     # Delete a model
+cd ~/storage/downloads
+
+# Phi-3 (3.8B, needs 4GB+ RAM)
+wget -O phi3.gguf https://huggingface.co/microsoft/Phi-3-mini-4k-instruct-gguf/resolve/main/Phi-3-mini-4k-instruct-q4.gguf
+
+# Gemma 2 (2B, needs 3GB+ RAM)
+wget -O gemma.gguf https://huggingface.co/bartowski/gemma-2-2b-it-GGUF/resolve/main/gemma-2-2b-it-Q4_K_M.gguf
 ```
 
-## Package Management
+## Rebuild llama.cpp (after update)
 
 ```bash
-pkg update                                        # Update package list
-pkg upgrade                                       # Upgrade packages
-pkg install llama.cpp                             # Install llama
-pkg search llama                                  # Search packages
-pkg list-installed                                # List installed
+cd ~/llama.cpp && git pull && cd build && cmake -DCMAKE_BUILD_TYPE=Release .. && make -j4
 ```
 
-## Storage
+## Free Up Space
 
 ```bash
-termux-setup-storage                              # Grant storage access
-cd ~/storage/downloads                            # Go to downloads
-ls ~/storage/shared                               # Internal storage
-df -h                                             # Check free space
-du -sh *.gguf                                     # Check model sizes
+df -h                             # Check storage
+du -sh ~/storage/downloads/*.gguf # Check model sizes
+rm ~/storage/downloads/tiny.gguf  # Delete a model
+rm -rf ~/llama.cpp                # Delete build (saves ~2GB)
 ```
 
-## Build llama.cpp from source
+## Shortcuts (add to ~/.bashrc)
 
 ```bash
-pkg install cmake ninja clang git -y
-git clone https://github.com/ggml-org/llama.cpp
-cd llama.cpp && mkdir build && cd build
-cmake -DCMAKE_BUILD_TYPE=Release ..
-make -j4
-./bin/llama-cli -m ~/storage/downloads/model.gguf -p "Hi"
+alias ai='~/llama.cpp/build/bin/llama-cli -m ~/storage/downloads/tiny.gguf --interactive'
+alias ai-phi='~/llama.cpp/build/bin/llama-cli -m ~/storage/downloads/phi3.gguf --interactive'
+alias rebuild-llama='cd ~/llama.cpp && git pull && cd build && cmake -DCMAKE_BUILD_TYPE=Release .. && make -j4'
 ```

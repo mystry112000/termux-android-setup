@@ -1,92 +1,100 @@
 # Termux AI — Run AI Models on Android
 
-Run AI models (Hermes, Llama, Qwen, DeepSeek) directly inside Termux on your Android phone.
+Run AI models directly in Termux by building from source.
 
-## One-Liner (Everything)
+## One-Liner (Full Setup)
 
 ```bash
-pkg update -y && pkg upgrade -y && pkg install llama.cpp git cmake python -y && cd ~/storage/downloads && wget -O hermes.gguf https://huggingface.co/bartowski/Hermes-3-Llama-3.1-8B-GGUF/resolve/main/Hermes-3-Llama-3.1-8B-Q4_K_M.gguf && echo "DONE! Run: llama-cli -m hermes.gguf"
+pkg update -y && pkg upgrade -y && pkg install cmake ninja clang git wget -y && git clone https://github.com/ggml-org/llama.cpp && cd llama.cpp && mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Release .. && make -j4 && cd ~/storage/downloads && wget -O tiny.gguf https://huggingface.co/microsoft/TinyLlama-1.1B-Chat-v1.0-GGUF/resolve/main/tinyllama-1.1b-chat-v1.0-q4_k_m.gguf && echo "DONE! Run: cd ~/llama.cpp/build && ./bin/llama-cli -m ~/storage/downloads/tiny.gguf --interactive"
 ```
 
 ## Step-by-Step
 
-### 1. Install llama.cpp
+### 1. Install Build Tools
 
 ```bash
 pkg update -y
 pkg upgrade -y
-pkg install llama.cpp -y
+pkg install cmake ninja clang git wget -y
 ```
 
-### 2. Download a Model
+### 2. Build llama.cpp from Source
+
+```bash
+git clone https://github.com/ggml-org/llama.cpp
+cd llama.cpp
+mkdir build
+cd build
+cmake -DCMAKE_BUILD_TYPE=Release ..
+make -j4
+```
+
+This takes 5-10 minutes on most phones.
+
+### 3. Download a Model
 
 ```bash
 cd ~/storage/downloads
 
-# Hermes 3 (good general purpose, ~5GB)
-wget -O hermes.gguf https://huggingface.co/bartowski/Hermes-3-Llama-3.1-8B-GGUF/resolve/main/Hermes-3-Llama-3.1-8B-Q4_K_M.gguf
-
-# or Qwen 3 Coder (best for coding, ~4GB)
-wget -O qwen.gguf https://huggingface.co/Qwen/Qwen3-Coder-7B-GGUF/resolve/main/qwen3-coder-7b-q4_k_m.gguf
-
-# or TinyLlama (smallest, ~1GB - works on any phone)
+# TinyLlama (1.1B, ~1GB) — works on any phone
 wget -O tiny.gguf https://huggingface.co/microsoft/TinyLlama-1.1B-Chat-v1.0-GGUF/resolve/main/tinyllama-1.1b-chat-v1.0-q4_k_m.gguf
+
+# Phi-3 Mini (3.8B, ~2.5GB) — good balance
+wget -O phi3.gguf https://huggingface.co/microsoft/Phi-3-mini-4k-instruct-gguf/resolve/main/Phi-3-mini-4k-instruct-q4.gguf
 ```
 
-### 3. Run the AI
+### 4. Run the AI
 
 ```bash
-# Chat with Hermes
-llama-cli -m hermes.gguf -p "Hello, who are you?" --interactive
+# Full path to run:
+~/llama.cpp/build/bin/llama-cli -m ~/storage/downloads/tiny.gguf --interactive
 
-# Chat with Qwen Coder
-llama-cli -m qwen.gguf -p "Write a Python function" --interactive
+# With system prompt:
+~/llama.cpp/build/bin/llama-cli -m ~/storage/downloads/tiny.gguf --system "You are a helpful assistant" --interactive
 
-# Chat with TinyLlama (fast on any phone)
-llama-cli -m tiny.gguf -p "Hi" --interactive
+# One-shot prompt (no chat):
+~/llama.cpp/build/bin/llama-cli -m ~/storage/downloads/tiny.gguf -p "Write a Python function" -n 200
 ```
 
-### 4. For Programming Tasks
+### 5. Make a Shortcut (so you don't type full path)
 
 ```bash
-llama-cli -m qwen.gguf -p "Write a JavaScript function to sort an array" --temp 0.2
+echo 'alias ai="~/llama.cpp/build/bin/llama-cli -m ~/storage/downloads/tiny.gguf --interactive"' >> ~/.bashrc
+source ~/.bashrc
+ai
 ```
 
-## If llama.cpp not in pkg
+## Model Options
 
-Build from source:
+| Model | File | Size | RAM Needed | Download Command |
+|-------|------|------|------------|------------------|
+| TinyLlama 1.1B | `tiny.gguf` | ~1GB | 2GB+ | `wget -O tiny.gguf https://huggingface.co/microsoft/TinyLlama-1.1B-Chat-v1.0-GGUF/resolve/main/tinyllama-1.1b-chat-v1.0-q4_k_m.gguf` |
+| Phi-3 Mini 3.8B | `phi3.gguf` | ~2.5GB | 4GB+ | `wget -O phi3.gguf https://huggingface.co/microsoft/Phi-3-mini-4k-instruct-gguf/resolve/main/Phi-3-mini-4k-instruct-q4.gguf` |
+| Gemma 2 2B | `gemma.gguf` | ~1.5GB | 3GB+ | `wget -O gemma.gguf https://huggingface.co/bartowski/gemma-2-2b-it-GGUF/resolve/main/gemma-2-2b-it-Q4_K_M.gguf` |
 
+## Troubleshooting
+
+**cmake fails:**
 ```bash
-pkg install cmake ninja clang -y
-git clone https://github.com/ggml-org/llama.cpp
-cd llama.cpp
-mkdir build && cd build
-cmake -DCMAKE_BUILD_TYPE=Release ..
-make -j4
-./bin/llama-cli -m ~/storage/downloads/hermes.gguf -p "Hi"
+pkg install ninja cmake clang -y --force
 ```
 
-## Model sizes (pick based on your phone RAM)
-
-| Model | Size | RAM Needed | Quality |
-|-------|------|------------|---------|
-| TinyLlama-1.1B | ~1GB | 2GB+ | Basic |
-| Qwen3-Coder-7B | ~4GB | 6GB+ | Good coding |
-| Hermes-3-8B | ~5GB | 8GB+ | Best general |
-| DeepSeek-Coder-6.7B | ~4GB | 6GB+ | Good coding |
-
-## Useful commands
-
+**make -j4 fails (out of memory):**
 ```bash
-# List all files
-ls -la ~/storage/downloads/
+make -j2  # Use 2 cores instead of 4
+```
 
-# Remove a model to free space
-rm ~/storage/downloads/hermes.gguf
+**wget fails to download model:**
+```bash
+# Try curl instead
+curl -L -o tiny.gguf https://huggingface.co/microsoft/TinyLlama-1.1B-Chat-v1.0-GGUF/resolve/main/tinyllama-1.1b-chat-v1.0-q4_k_m.gguf
+```
 
-# Run with system prompt
-llama-cli -m hermes.gguf --system "You are a helpful assistant" --interactive
+**Build takes too long:**
+Plug in your phone and let it run. Average: 5-10 min.
 
-# Check storage
-df -h
+**Out of storage:**
+```bash
+df -h  # Check free space
+rm -rf ~/llama.cpp  # Remove build files (keep the model)
 ```

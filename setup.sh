@@ -61,11 +61,11 @@ echo ""
 echo -e "${YELLOW}[5/8] Installing OpenCode (AI coding agent)...${NC}"
 npm cache clean --force 2>/dev/null
 
-# Try normal install first
-npm install -g opencode-ai --prefix=$PREFIX 2>/dev/null || {
+# Try normal install first (--force for Termux/Android OS support)
+npm install -g opencode-ai --prefix=$PREFIX --force --ignore-scripts 2>/dev/null || {
     echo -e "${YELLOW}First attempt failed. Retrying with explicit registry...${NC}"
     npm config set registry https://registry.npmjs.org/
-    npm install -g opencode-ai --prefix=$PREFIX
+    npm install -g opencode-ai --prefix=$PREFIX --force --ignore-scripts
 }
 
 # Fix: Ensure $PREFIX/bin is in PATH

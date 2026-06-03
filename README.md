@@ -33,14 +33,17 @@ pkg install nodejs-lts -y
 ## 3. Install OpenCode (AI Coding Agent)
 
 ```bash
-# Install opencode globally
-npm install -g opencode-ai
+# Install opencode globally (use --force for Termux/Android)
+npm install -g opencode-ai --prefix=$PREFIX --force --ignore-scripts
 
 # Go to your documents folder
 cd ~/storage/shared/Documents
 
 # Run opencode (if "command not found", see fix below)
 opencode
+
+# If that doesn't work, use npx instead
+npx opencode
 ```
 
 **Fix: opencode command not found after npm install -g:**
@@ -143,7 +146,19 @@ npm --version  # Should show version number now
 ```bash
 # Set npm registry explicitly
 npm config set registry https://registry.npmjs.org/
-npm install -g opencode-ai
+npm install -g opencode-ai --prefix=$PREFIX --force
+```
+
+**npm ERR! notsup (Unsupported platform for Termux/Android):**
+```
+This error means a package doesn't support Android. Fix:
+```
+```bash
+# Fix: Force install (bypass OS checks)
+npm install -g opencode-ai --prefix=$PREFIX --force --ignore-scripts
+
+# OR run without installing globally (no errors)
+npx opencode
 ```
 
 **OpenCode install hangs or fails:**

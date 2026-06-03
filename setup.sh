@@ -27,6 +27,20 @@ echo ""
 # Step 2: Essential tools
 echo -e "${YELLOW}[2/8] Installing essential tools...${NC}"
 pkg install nodejs git curl wget python openssh -y
+
+# Fix: If npm is missing, install nodejs-lts instead
+if ! command -v npm &>/dev/null; then
+    echo -e "${YELLOW}npm not found. Installing nodejs-lts...${NC}"
+    pkg install nodejs-lts -y
+fi
+
+# Final check
+if ! command -v npm &>/dev/null; then
+    echo -e "${RED}ERROR: npm still not found. Running manual fix...${NC}"
+    pkg uninstall nodejs -y 2>/dev/null
+    pkg install nodejs-lts -y
+fi
+
 echo -e "${GREEN}[OK] Essential tools installed${NC}"
 echo ""
 
@@ -46,7 +60,11 @@ echo ""
 # Step 5: Install opencode
 echo -e "${YELLOW}[5/8] Installing OpenCode (AI coding agent)...${NC}"
 npm cache clean --force 2>/dev/null
-npm install -g opencode-ai
+npm install -g opencode-ai 2>/dev/null || {
+    echo -e "${YELLOW}npm install failed. Trying alternate method...${NC}"
+    npm config set registry https://registry.npmjs.org/
+    npm install -g opencode-ai
+}
 echo -e "${GREEN}[OK] OpenCode installed${NC}"
 echo ""
 

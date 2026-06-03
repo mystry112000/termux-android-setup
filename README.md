@@ -22,6 +22,12 @@ termux-setup-storage
 
 # Install essential tools
 pkg install nodejs git curl wget python -y
+
+# IMPORTANT: Check if npm is installed (sometimes nodejs on Termux lacks npm)
+npm --version
+
+# If npm is NOT found, install nodejs-lts instead:
+pkg install nodejs-lts -y
 ```
 
 ## 3. Install OpenCode (AI Coding Agent)
@@ -101,6 +107,30 @@ pkg install tree zip unzip -y
 | `~/storage/pictures` | Pictures folder |
 
 ## 8. Troubleshooting
+
+**npm not found after installing nodejs:**
+The standard `nodejs` package in Termux sometimes doesn't include npm.
+```bash
+# Fix: Install nodejs-lts instead
+pkg uninstall nodejs -y
+pkg install nodejs-lts -y
+npm --version  # Should show version number now
+```
+
+**npm install fails (network/proxy):**
+```bash
+# Set npm registry explicitly
+npm config set registry https://registry.npmjs.org/
+npm install -g opencode-ai
+```
+
+**OpenCode install hangs or fails:**
+```bash
+# Clear cache and retry
+npm cache clean --force
+npm config set fetch-timeout 60000
+npm install -g opencode-ai --verbose
+```
 
 **Storage permission denied:**
 - Run `termux-setup-storage` again

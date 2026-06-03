@@ -1,219 +1,92 @@
-# Termux Android Setup
+# Termux AI — Run AI Models on Android
 
-Complete guide to set up Termux for Android development, coding, and AI agents.
+Run AI models (Hermes, Llama, Qwen, DeepSeek) directly inside Termux on your Android phone.
 
 ## One-Liner (Everything)
 
-Copy-paste this one line in Termux:
-
 ```bash
-pkg update -y && pkg upgrade -y && pkg install nodejs-lts git curl wget python openssh -y && npm install -g opencode-ai --prefix=$PREFIX --force --ignore-scripts && echo "DONE! Run: opencode" && opencode
+pkg update -y && pkg upgrade -y && pkg install llama.cpp git cmake python -y && cd ~/storage/downloads && wget -O hermes.gguf https://huggingface.co/bartowski/Hermes-3-Llama-3.1-8B-GGUF/resolve/main/Hermes-3-Llama-3.1-8B-Q4_K_M.gguf && echo "DONE! Run: llama-cli -m hermes.gguf"
 ```
 
-This installs **everything**: Node.js, Git, Python, SSH, Ollama, OpenCode, and launches OpenCode.
+## Step-by-Step
 
-## 1. Install Termux
-
-Download from [F-Droid](https://f-droid.org/packages/com.termux/) (recommended) or GitHub Releases.
-
-## 2. Step-by-Step Setup
-
-Prefer manual? Run these **one by one**:
+### 1. Install llama.cpp
 
 ```bash
-# Update packages
 pkg update -y
-
-# Upgrade all packages
 pkg upgrade -y
-
-# Grant storage access (allow Termux to read/write phone files)
-termux-setup-storage
-
-# Install essential tools
-pkg install nodejs git curl wget python -y
-
-# IMPORTANT: Check if npm is installed (sometimes nodejs on Termux lacks npm)
-npm --version
-
-# If npm is NOT found, install nodejs-lts instead:
-pkg install nodejs-lts -y
+pkg install llama.cpp -y
 ```
 
-## 3. Install OpenCode (AI Coding Agent)
+### 2. Download a Model
 
 ```bash
-# Install opencode globally (use --force for Termux/Android)
-npm install -g opencode-ai --prefix=$PREFIX --force --ignore-scripts
+cd ~/storage/downloads
 
-# Go to your documents folder
-cd ~/storage/shared/Documents
+# Hermes 3 (good general purpose, ~5GB)
+wget -O hermes.gguf https://huggingface.co/bartowski/Hermes-3-Llama-3.1-8B-GGUF/resolve/main/Hermes-3-Llama-3.1-8B-Q4_K_M.gguf
 
-# Run opencode (if "command not found", see fix below)
-opencode
+# or Qwen 3 Coder (best for coding, ~4GB)
+wget -O qwen.gguf https://huggingface.co/Qwen/Qwen3-Coder-7B-GGUF/resolve/main/qwen3-coder-7b-q4_k_m.gguf
 
-# If that doesn't work, use npx instead
-npx opencode
+# or TinyLlama (smallest, ~1GB - works on any phone)
+wget -O tiny.gguf https://huggingface.co/microsoft/TinyLlama-1.1B-Chat-v1.0-GGUF/resolve/main/tinyllama-1.1b-chat-v1.0-q4_k_m.gguf
 ```
 
-**Fix: opencode command not found after npm install -g:**
-```bash
-# 1. Find where npm installed it
-npm root -g
-
-# 2. Add npm global bin to PATH (run this)
-echo 'export PATH=$PATH:$PREFIX/bin' >> ~/.bashrc
-source ~/.bashrc
-
-# 3. Try running directly from node_modules
-npx opencode
-
-# 4. OR install with explicit prefix
-npm install -g opencode-ai --prefix=$PREFIX
-
-# 5. Verify the binary location
-ls $PREFIX/bin/opencode 2>/dev/null || echo "not in bin"
-
-# 6. Last resort: run directly
-$PREFIX/lib/node_modules/opencode-ai/bin/opencode
-```
-
-## 4. Install Local AI Models (Ollama)
+### 3. Run the AI
 
 ```bash
-# Install Ollama
-pkg install ollama -y
+# Chat with Hermes
+llama-cli -m hermes.gguf -p "Hello, who are you?" --interactive
 
-# Pull Hermes 3 (good general AI model)
-ollama pull nous-hermes3
+# Chat with Qwen Coder
+llama-cli -m qwen.gguf -p "Write a Python function" --interactive
 
-# Pull DeepSeek (good for coding)
-ollama pull deepseek-coder-v2
-
-# Run a model directly in Termux
-ollama run nous-hermes3
+# Chat with TinyLlama (fast on any phone)
+llama-cli -m tiny.gguf -p "Hi" --interactive
 ```
 
-## 5. Common Termux Packages
+### 4. For Programming Tasks
 
 ```bash
-# Development tools
-pkg install build-essential cmake -y
-
-# Python packages
-pip install flask fastapi requests
-
-# Editors
-pkg install vim nano -y
-
-# Network tools
-pkg install openssh nmap -y
-
-# File management
-pkg install tree zip unzip -y
+llama-cli -m qwen.gguf -p "Write a JavaScript function to sort an array" --temp 0.2
 ```
 
-## 6. Useful Commands
+## If llama.cpp not in pkg
 
-| Command | Description |
-|---------|-------------|
-| `pkg list-installed` | List installed packages |
-| `pkg search <name>` | Search for a package |
-| `pkg show <name>` | Show package details |
-| `termux-clipboard-set` | Copy to clipboard |
-| `termux-clipboard-get` | Paste from clipboard |
-| `termux-wifi-scaninfo` | Scan WiFi networks |
-| `termux-telephony-deviceinfo` | Show device info |
-| `termux-battery-status` | Show battery status |
-| `termux-camera-photo` | Take a photo |
-| `termux-torch on/off` | Toggle flashlight |
-| `termux-vibrate <ms>` | Vibrate device |
+Build from source:
 
-## 7. Storage Locations
-
-| Path | Description |
-|------|-------------|
-| `~/storage/shared` | Internal shared storage |
-| `~/storage/downloads` | Downloads folder |
-| `~/storage/dcim` | Camera photos/videos |
-| `~/storage/documents` | Documents folder |
-| `~/storage/music` | Music folder |
-| `~/storage/movies` | Movies folder |
-| `~/storage/pictures` | Pictures folder |
-
-## 8. Troubleshooting
-
-**npm not found after installing nodejs:**
-The standard `nodejs` package in Termux sometimes doesn't include npm.
 ```bash
-# Fix: Install nodejs-lts instead
-pkg uninstall nodejs -y
-pkg install nodejs-lts -y
-npm --version  # Should show version number now
+pkg install cmake ninja clang -y
+git clone https://github.com/ggml-org/llama.cpp
+cd llama.cpp
+mkdir build && cd build
+cmake -DCMAKE_BUILD_TYPE=Release ..
+make -j4
+./bin/llama-cli -m ~/storage/downloads/hermes.gguf -p "Hi"
 ```
 
-**npm install fails (network/proxy):**
+## Model sizes (pick based on your phone RAM)
+
+| Model | Size | RAM Needed | Quality |
+|-------|------|------------|---------|
+| TinyLlama-1.1B | ~1GB | 2GB+ | Basic |
+| Qwen3-Coder-7B | ~4GB | 6GB+ | Good coding |
+| Hermes-3-8B | ~5GB | 8GB+ | Best general |
+| DeepSeek-Coder-6.7B | ~4GB | 6GB+ | Good coding |
+
+## Useful commands
+
 ```bash
-# Set npm registry explicitly
-npm config set registry https://registry.npmjs.org/
-npm install -g opencode-ai --prefix=$PREFIX --force
-```
+# List all files
+ls -la ~/storage/downloads/
 
-**npm ERR! notsup (Unsupported platform for Termux/Android):**
-```
-This error means a package doesn't support Android. Fix:
-```
-```bash
-# Fix: Force install (bypass OS checks)
-npm install -g opencode-ai --prefix=$PREFIX --force --ignore-scripts
+# Remove a model to free space
+rm ~/storage/downloads/hermes.gguf
 
-# OR run without installing globally (no errors)
-npx opencode
-```
+# Run with system prompt
+llama-cli -m hermes.gguf --system "You are a helpful assistant" --interactive
 
-**OpenCode install hangs or fails:**
-```bash
-# Clear cache and retry
-npm cache clean --force
-npm config set fetch-timeout 60000
-npm install -g opencode-ai --verbose
-```
-
-**Storage permission denied:**
-- Run `termux-setup-storage` again
-- Check Android Settings > Apps > Termux > Permissions
-
-**OpenCode not found after install (command not found):**
-```bash
-# Fix 1: Add npm global path
-echo 'export PATH=$PATH:$PREFIX/bin' >> ~/.bashrc
-source ~/.bashrc
-
-# Fix 2: Install with correct prefix
-npm install -g opencode-ai --prefix=$PREFIX
-
-# Fix 3: Run via npx
-npx opencode
-
-# Fix 4: Find and link manually
-npm bin -g
-ls $(npm bin -g)/opencode
-
-# Fix 5: Run directly
-node $(npm root -g)/opencode-ai/bin/opencode
-```
-
-**Ollama installation failed:**
-```bash
-pkg update -y
-pkg install ollama -y --force
-```
-
-**GitHub push from Termux:**
-```bash
-git config --global user.name "Your Name"
-git config --global user.email "your@email.com"
-ssh-keygen -t ed25519 -C "your@email.com"
-cat ~/.ssh/id_ed25519.pub
-# Add key to GitHub.com > Settings > SSH Keys
+# Check storage
+df -h
 ```

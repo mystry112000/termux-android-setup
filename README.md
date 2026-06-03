@@ -39,8 +39,30 @@ npm install -g opencode-ai
 # Go to your documents folder
 cd ~/storage/shared/Documents
 
-# Run opencode
+# Run opencode (if "command not found", see fix below)
 opencode
+```
+
+**Fix: opencode command not found after npm install -g:**
+```bash
+# 1. Find where npm installed it
+npm root -g
+
+# 2. Add npm global bin to PATH (run this)
+echo 'export PATH=$PATH:$PREFIX/bin' >> ~/.bashrc
+source ~/.bashrc
+
+# 3. Try running directly from node_modules
+npx opencode
+
+# 4. OR install with explicit prefix
+npm install -g opencode-ai --prefix=$PREFIX
+
+# 5. Verify the binary location
+ls $PREFIX/bin/opencode 2>/dev/null || echo "not in bin"
+
+# 6. Last resort: run directly
+$PREFIX/lib/node_modules/opencode-ai/bin/opencode
 ```
 
 ## 4. Install Local AI Models (Ollama)
@@ -136,10 +158,24 @@ npm install -g opencode-ai --verbose
 - Run `termux-setup-storage` again
 - Check Android Settings > Apps > Termux > Permissions
 
-**OpenCode not found after install:**
+**OpenCode not found after install (command not found):**
 ```bash
-npm cache clean --force
-npm install -g opencode-ai
+# Fix 1: Add npm global path
+echo 'export PATH=$PATH:$PREFIX/bin' >> ~/.bashrc
+source ~/.bashrc
+
+# Fix 2: Install with correct prefix
+npm install -g opencode-ai --prefix=$PREFIX
+
+# Fix 3: Run via npx
+npx opencode
+
+# Fix 4: Find and link manually
+npm bin -g
+ls $(npm bin -g)/opencode
+
+# Fix 5: Run directly
+node $(npm root -g)/opencode-ai/bin/opencode
 ```
 
 **Ollama installation failed:**

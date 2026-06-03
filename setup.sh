@@ -60,11 +60,26 @@ echo ""
 # Step 5: Install opencode
 echo -e "${YELLOW}[5/8] Installing OpenCode (AI coding agent)...${NC}"
 npm cache clean --force 2>/dev/null
-npm install -g opencode-ai 2>/dev/null || {
-    echo -e "${YELLOW}npm install failed. Trying alternate method...${NC}"
+
+# Try normal install first
+npm install -g opencode-ai --prefix=$PREFIX 2>/dev/null || {
+    echo -e "${YELLOW}First attempt failed. Retrying with explicit registry...${NC}"
     npm config set registry https://registry.npmjs.org/
-    npm install -g opencode-ai
+    npm install -g opencode-ai --prefix=$PREFIX
 }
+
+# Fix: Ensure $PREFIX/bin is in PATH
+if ! echo "$PATH" | grep -q "$PREFIX/bin"; then
+    echo 'export PATH=$PATH:$PREFIX/bin' >> ~/.bashrc
+    source ~/.bashrc
+fi
+
+# Verify opencode is accessible
+if ! command -v opencode &>/dev/null; then
+    echo -e "${YELLOW}Creating symlink for opencode...${NC}"
+    ln -sf "$(npm root -g)/opencode-ai/bin/opencode" $PREFIX/bin/opencode 2>/dev/null
+fi
+
 echo -e "${GREEN}[OK] OpenCode installed${NC}"
 echo ""
 

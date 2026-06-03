@@ -7,7 +7,7 @@ Complete guide to set up Termux for Android development, coding, and AI agents.
 Copy-paste this one line in Termux:
 
 ```bash
-pkg update -y && pkg upgrade -y && pkg install nodejs-lts git curl wget python openssh ollama -y && npm install -g opencode-ai --prefix=$PREFIX --force --ignore-scripts && echo "DONE! Run: opencode" && opencode
+pkg update -y && pkg upgrade -y && pkg install nodejs-lts git curl wget python openssh -y && npm install -g opencode-ai --prefix=$PREFIX --force --ignore-scripts && echo "DONE! Run: opencode" && opencode
 ```
 
 This installs **everything**: Node.js, Git, Python, SSH, Ollama, OpenCode, and launches OpenCode.

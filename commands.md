@@ -1,52 +1,44 @@
 # Termux AI Commands
 
-## Run AI Models
+## Run AI (Python)
 
 ```bash
-# Interative chat
-~/llama.cpp/build/bin/llama-cli -m ~/storage/downloads/tiny.gguf --interactive
+# Quick test
+python -c "from llama_cpp import Llama; llm=Llama('~/storage/downloads/tiny.gguf'); print(llm('Hello', max_tokens=50)['choices'][0]['text'])"
 
-# One-shot
-~/llama.cpp/build/bin/llama-cli -m ~/storage/downloads/tiny.gguf -p "your prompt" -n 200
-
-# With system prompt
-~/llama.cpp/build/bin/llama-cli -m ~/storage/downloads/tiny.gguf --system "Be concise" --interactive
-
-# Control randomness (0.0 = precise, 1.0 = creative)
-~/llama.cpp/build/bin/llama-cli -m ~/storage/downloads/tiny.gguf --temp 0.2 --interactive
+# Interactive chat
+python -c "
+from llama_cpp import Llama
+llm = Llama('~/storage/downloads/tiny.gguf', verbose=False)
+while True:
+    q = input('You: ')
+    if q == 'exit': break
+    r = llm(q, max_tokens=200)
+    print('AI:', r['choices'][0]['text'].strip())
+"
 ```
 
-## Download More Models
+## Download Models
 
 ```bash
 cd ~/storage/downloads
-
-# Phi-3 (3.8B, needs 4GB+ RAM)
-wget -O phi3.gguf https://huggingface.co/microsoft/Phi-3-mini-4k-instruct-gguf/resolve/main/Phi-3-mini-4k-instruct-q4.gguf
-
-# Gemma 2 (2B, needs 3GB+ RAM)
-wget -O gemma.gguf https://huggingface.co/bartowski/gemma-2-2b-it-GGUF/resolve/main/gemma-2-2b-it-Q4_K_M.gguf
+wget -O tiny.gguf <url>    # Download model
+ls -lh *.gguf              # Check sizes
+rm *.gguf                  # Delete all models
 ```
 
-## Rebuild llama.cpp (after update)
+## Python Package Management
 
 ```bash
-cd ~/llama.cpp && git pull && cd build && cmake -DCMAKE_BUILD_TYPE=Release .. && make -j4
+pip install llama-cpp-python   # Install
+pip list                       # List packages
+pip uninstall llama-cpp-python # Remove
 ```
 
-## Free Up Space
+## Storage
 
 ```bash
-df -h                             # Check storage
-du -sh ~/storage/downloads/*.gguf # Check model sizes
-rm ~/storage/downloads/tiny.gguf  # Delete a model
-rm -rf ~/llama.cpp                # Delete build (saves ~2GB)
-```
-
-## Shortcuts (add to ~/.bashrc)
-
-```bash
-alias ai='~/llama.cpp/build/bin/llama-cli -m ~/storage/downloads/tiny.gguf --interactive'
-alias ai-phi='~/llama.cpp/build/bin/llama-cli -m ~/storage/downloads/phi3.gguf --interactive'
-alias rebuild-llama='cd ~/llama.cpp && git pull && cd build && cmake -DCMAKE_BUILD_TYPE=Release .. && make -j4'
+df -h                       # Check space
+du -sh *.gguf               # Model sizes
+cd ~/storage/downloads      # Models location
 ```

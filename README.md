@@ -1,100 +1,94 @@
 # Termux AI — Run AI Models on Android
 
-Run AI models directly in Termux by building from source.
+Run AI models in Termux using Python (no cmake/make needed).
 
-## One-Liner (Full Setup)
+## One-Liner (Everything)
 
 ```bash
-pkg update -y && pkg upgrade -y && pkg install cmake ninja clang git wget -y && git clone https://github.com/ggml-org/llama.cpp && cd llama.cpp && mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Release .. && make -j4 && cd ~/storage/downloads && wget -O tiny.gguf https://huggingface.co/microsoft/TinyLlama-1.1B-Chat-v1.0-GGUF/resolve/main/tinyllama-1.1b-chat-v1.0-q4_k_m.gguf && echo "DONE! Run: cd ~/llama.cpp/build && ./bin/llama-cli -m ~/storage/downloads/tiny.gguf --interactive"
+pkg update -y && pkg upgrade -y && pkg install python wget -y && cd ~/storage/downloads && wget -O tiny.gguf https://huggingface.co/microsoft/TinyLlama-1.1B-Chat-v1.0-GGUF/resolve/main/tinyllama-1.1b-chat-v1.0-q4_k_m.gguf && pip install llama-cpp-python && echo "DONE" && python -c "from llama_cpp import Llama; llm=Llama('tiny.gguf'); print(llm('Hello', max_tokens=50)['choices'][0]['text'])"
 ```
 
 ## Step-by-Step
 
-### 1. Install Build Tools
+### 1. Install Python & Download Model
 
 ```bash
 pkg update -y
 pkg upgrade -y
-pkg install cmake ninja clang git wget -y
-```
-
-### 2. Build llama.cpp from Source
-
-```bash
-git clone https://github.com/ggml-org/llama.cpp
-cd llama.cpp
-mkdir build
-cd build
-cmake -DCMAKE_BUILD_TYPE=Release ..
-make -j4
-```
-
-This takes 5-10 minutes on most phones.
-
-### 3. Download a Model
-
-```bash
+pkg install python wget -y
 cd ~/storage/downloads
 
 # TinyLlama (1.1B, ~1GB) — works on any phone
 wget -O tiny.gguf https://huggingface.co/microsoft/TinyLlama-1.1B-Chat-v1.0-GGUF/resolve/main/tinyllama-1.1b-chat-v1.0-q4_k_m.gguf
-
-# Phi-3 Mini (3.8B, ~2.5GB) — good balance
-wget -O phi3.gguf https://huggingface.co/microsoft/Phi-3-mini-4k-instruct-gguf/resolve/main/Phi-3-mini-4k-instruct-q4.gguf
 ```
 
-### 4. Run the AI
+### 2. Install llama-cpp-python
 
 ```bash
-# Full path to run:
-~/llama.cpp/build/bin/llama-cli -m ~/storage/downloads/tiny.gguf --interactive
-
-# With system prompt:
-~/llama.cpp/build/bin/llama-cli -m ~/storage/downloads/tiny.gguf --system "You are a helpful assistant" --interactive
-
-# One-shot prompt (no chat):
-~/llama.cpp/build/bin/llama-cli -m ~/storage/downloads/tiny.gguf -p "Write a Python function" -n 200
+pip install llama-cpp-python
 ```
 
-### 5. Make a Shortcut (so you don't type full path)
+### 3. Chat with AI
 
 ```bash
-echo 'alias ai="~/llama.cpp/build/bin/llama-cli -m ~/storage/downloads/tiny.gguf --interactive"' >> ~/.bashrc
-source ~/.bashrc
-ai
+python -c "
+from llama_cpp import Llama
+llm = Llama('~/storage/downloads/tiny.gguf')
+while True:
+    q = input('You: ')
+    if q == 'exit':
+        break
+    r = llm(q, max_tokens=200)
+    print('AI:', r['choices'][0]['text'])
+"
 ```
 
-## Model Options
+### 4. Or use this chat script (save as chat.py)
 
-| Model | File | Size | RAM Needed | Download Command |
-|-------|------|------|------------|------------------|
-| TinyLlama 1.1B | `tiny.gguf` | ~1GB | 2GB+ | `wget -O tiny.gguf https://huggingface.co/microsoft/TinyLlama-1.1B-Chat-v1.0-GGUF/resolve/main/tinyllama-1.1b-chat-v1.0-q4_k_m.gguf` |
-| Phi-3 Mini 3.8B | `phi3.gguf` | ~2.5GB | 4GB+ | `wget -O phi3.gguf https://huggingface.co/microsoft/Phi-3-mini-4k-instruct-gguf/resolve/main/Phi-3-mini-4k-instruct-q4.gguf` |
-| Gemma 2 2B | `gemma.gguf` | ~1.5GB | 3GB+ | `wget -O gemma.gguf https://huggingface.co/bartowski/gemma-2-2b-it-GGUF/resolve/main/gemma-2-2b-it-Q4_K_M.gguf` |
+```bash
+cat > chat.py << 'EOF'
+from llama_cpp import Llama
+import sys
+
+model = sys.argv[1] if len(sys.argv) > 1 else 'tiny.gguf'
+llm = Llama(model, verbose=False)
+
+print("AI ready! Type 'exit' to quit")
+while True:
+    q = input("\nYou: ")
+    if q.lower() == 'exit':
+        break
+    r = llm(q, max_tokens=200, stop=["\n\n"])
+    print("AI:", r['choices'][0]['text'].strip())
+EOF
+
+python chat.py tiny.gguf
+```
+
+## Bigger Models
+
+```bash
+cd ~/storage/downloads
+
+# Gemma 2 (2B, ~1.5GB, needs 3GB RAM)
+wget -O gemma.gguf https://huggingface.co/bartowski/gemma-2-2b-it-GGUF/resolve/main/gemma-2-2b-it-Q4_K_M.gguf
+
+python chat.py gemma.gguf
+```
 
 ## Troubleshooting
 
-**cmake fails:**
+**pip install fails (no clang):**
 ```bash
-pkg install ninja cmake clang -y --force
+pkg install clang cmake -y
+pip install llama-cpp-python
 ```
 
-**make -j4 fails (out of memory):**
-```bash
-make -j2  # Use 2 cores instead of 4
-```
+**Out of memory loading model:**
+Use smaller model (TinyLlama 1.1B instead of 7B+)
 
-**wget fails to download model:**
+**Download slow:**
 ```bash
-# Try curl instead
-curl -L -o tiny.gguf https://huggingface.co/microsoft/TinyLlama-1.1B-Chat-v1.0-GGUF/resolve/main/tinyllama-1.1b-chat-v1.0-q4_k_m.gguf
-```
-
-**Build takes too long:**
-Plug in your phone and let it run. Average: 5-10 min.
-
-**Out of storage:**
-```bash
-df -h  # Check free space
-rm -rf ~/llama.cpp  # Remove build files (keep the model)
+# Use curl with resume support
+curl -C - -L -o tiny.gguf https://huggingface.co/microsoft/TinyLlama-1.1B-Chat-v1.0-GGUF/resolve/main/tinyllama-1.1b-chat-v1.0-q4_k_m.gguf
 ```
